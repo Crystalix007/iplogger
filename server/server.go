@@ -2,10 +2,9 @@ package server
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
 	"iplogger/db"
 	"net/http"
-	"strings"
-	"time"
 )
 
 type HttpServer struct {
@@ -25,24 +24,42 @@ func CreateServer() Server {
 	}
 }
 
-// Run starts the webserver
+func createHandler(server *HttpServer) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
+		shortUrl := params["url"]
+		server.GetLongUrl(shortUrl)
+		server.logger.Log(fmt.Sprintf("Get long url %s", shortUrl))
+		server.logger.Log(fmt.Sprintf("%s - %s", r.RequestURI, r.UserAgent()))
+	}
+}
+
 func (httpServer HttpServer) Run() {
-	http.HandleFunc("/urls/", func(w http.ResponseWriter, r *http.Request) {
-		shortUrl := strings.Replace(r.URL.Path, "/urls/", "", 1)
-
-		// Log timestamp, remote address, cookies, referer, and user agent.
-		// Add anything else you want to log below.
-		httpServer.logger.Log(fmt.Sprintf("[url: %s] [%s] %s - %s - %s - %s",
-			shortUrl,
-			time.Now(),
-			r.RemoteAddr,
-			r.Cookies(),
-			r.Referer(),
-			r.UserAgent(),
-		))
-
-		
-
+	router := mux.NewRouter()
+	router.HandleFunc("/urls/{url}", createHandler(&httpServer))
+	router.HandleFunc("/create", func(w http.ResponseWriter, r *http.Request) {
+		params := mux.Vars(r)
+		httpServer.NewUrl(params["url"])
 	})
-	http.ListenAndServe(":8080", nil)
+	httpServer.db.Migrate()
+	http.ListenAndServe(":8080", router)
+}
+
+func (httpServer HttpServer) GetLongUrl(shortUrl string) string {
+	db := &httpServer.db
+	val, err := db.GetFullUrlFromShort(shortUrl)
+	if err == nil {
+		return val
+	} else {
+		return "nofound"
+	}
+}
+
+func (httpServer HttpServer) NewUrl(longUrl string) string {
+	db := &httpServer.db
+	return db.CreateUrl(longUrl)
+}
+
+func (httpServer HttpServer) Migrate() {
+	httpServer.db.Migrate()
 }

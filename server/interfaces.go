@@ -5,5 +5,13 @@ type Logging interface {
 }
 
 type Server interface {
+	Migrate()
 	Run()
+	GetLongUrl(shortUrl string) string
+	NewUrl(longUrl string) string
+}
+
+type Database interface {
+	GetFullUrlFromShort(shortUrl string) string
+	CreateUrl(longUrl string) string
 }
