@@ -2,17 +2,12 @@ package db
 
 import (
 	"gorm.io/gorm"
-	"time"
 )
 
-type URL struct {
+type Url struct {
 	gorm.Model
-	fullUrl string
-	shortUrl string
+	ID uint `gorm:"primaryKey"`
+	LongUrl string
+	ShortUrl string `gorm:"index"`
 }
 
-type Logged struct {
-	gorm.Model
-	IP string
-	timestamp time.Time
-}
