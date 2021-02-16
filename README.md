@@ -1,6 +1,6 @@
 # iplogger
 
-iplogger is an IP logger written in Go. It is intended for OSINT and also functions as URL shortener.
+iplogger is an IP logger written in Go. It is useful for OSINT and also functions as a URL shortener.
 
 ## Usage as a URL shortener
 
